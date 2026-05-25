@@ -1,0 +1,55 @@
+start_date: "2020-01-01"
+end_date: "2021-12-31"
+initial_capital: 1000000
+
+data:
+  price_source: "mock"  # mock or yfinance
+  fundamentals_path: "data/fundamentals_sample.csv"
+  tickers:
+    - AAPL
+    - MSFT
+    - GOOGL
+    - AMZN
+    - META
+    - JPM
+    - BAC
+    - XOM
+    - CVX
+    - PFE
+    - MRK
+    - HD
+    - NKE
+    - CAT
+    - GE
+    - PG
+    - KO
+    - COST
+    - WMT
+    - UNH
+  benchmark: "SPY"
+
+universe:
+  min_price: 5
+  min_avg_dollar_volume_20d: 10000000
+  min_market_cap: 1000000000
+  min_history_days: 252
+  allowed_security_type: "Common Stock"
+
+factors:
+  winsor_lower: 0.01
+  winsor_upper: 0.99
+  max_missing_subfactors: 2
+  weights:
+    momentum_score: 0.30
+    quality_score: 0.25
+    value_score: 0.25
+    low_vol_score: 0.20
+
+portfolio:
+  top_n: 50
+  max_stock_weight: 0.025
+  max_sector_weight: 0.25
+
+costs:
+  commission_rate: 0.001
+  slippage_rate: 0.001
