@@ -12,11 +12,37 @@ python main.py --config config.yaml
 pytest
 ```
 
-Default config uses deterministic mock prices so the example runs without network access. Set `data.price_source: yfinance` in `config.yaml` to prototype price downloads through `yfinance`.
+Default config uses deterministic mock prices so the example runs without network access. Set `data.price_provider: yfinance` in `config.yaml` to prototype price downloads through `yfinance`; keep `data.fundamental_provider: csv` for local CSV/parquet fundamentals.
+
+## Paper Trading
+
+The paper trading layer is isolated from the research/backtest engine. It reads the latest `outputs/factor_scores.csv`, rebuilds target weights with the same portfolio construction code, applies paper-trading risk checks, writes `outputs/orders_preview.csv`, and writes `outputs/paper_order_explanations.csv`.
+
+Dry-run is the default:
+
+```bash
+python paper_trading.py --config config.yaml
+```
+
+Actual paper order submission requires both an explicit execute flag and disabling dry-run. Put paper keys in `multifactor_equity/.env`:
+
+```bash
+ALPACA_API_KEY=...
+ALPACA_SECRET_KEY=...
+ALPACA_PAPER_BASE_URL=https://paper-api.alpaca.markets
+```
+
+Then run:
+
+```bash
+python paper_trading.py --config config.yaml --execute --no-dry-run
+```
+
+`.env` is ignored by git. Keys are loaded into environment variables at runtime and are never hardcoded. The Alpaca broker implementation rejects non-paper endpoints. Risk checks enforce long-only targets, no leverage after the configured cash buffer, max single-name weight, max sector weight, and unknown-symbol rejection.
 
 ## Data Model
 
-`data/fundamentals_sample.csv` is the first-version fundamental input. Required schema:
+`data/fundamentals_sample.csv` is the first-version fundamental input, read by `CSVFundamentalProvider`. `LocalMetadataProvider` derives universe metadata from the same point-in-time file for the sample project. Required schema:
 
 - `ticker`, `sector`, `security_type`
 - `is_adr`, `is_etf`, `is_otc`, `is_preferred`
@@ -25,7 +51,13 @@ Default config uses deterministic mock prices so the example runs without networ
 - `net_income_ttm`, `free_cash_flow_ttm`, `book_value`, `book_equity`
 - `revenue_ttm`, `gross_profit_ttm`, `total_debt`, `operating_cash_flow_ttm`, `total_assets`
 
-The backtest uses only rows with `available_date <= signal_date`; `report_date` is metadata and should be retained for auditability. Real data should replace the sample with point-in-time, survivorship-bias-free fundamentals and security master data from sources such as Compustat, FactSet, Polygon, QuantConnect, OpenBB, or SEC EDGAR-derived pipelines. For production-grade research, include delisted names, historical sector/security classifications, split-adjusted prices, and actual historical tradability.
+The backtest uses provider interfaces only for data access:
+
+- `PriceDataProvider`
+- `FundamentalDataProvider`
+- `MetadataProvider`
+
+The sample providers use only rows with `available_date <= signal_date`; `report_date` is metadata and should be retained for auditability. Real data should replace the sample providers with point-in-time, survivorship-bias-free fundamentals and security master data from sources such as Compustat, FactSet, Polygon, QuantConnect, OpenBB, or SEC EDGAR-derived pipelines. For production-grade research, include delisted names, historical sector/security classifications, split-adjusted prices, and actual historical tradability.
 
 ## Strategy
 
@@ -68,6 +100,8 @@ All outputs are written to `outputs/`:
 - `factor_quantile_returns.csv`
 - `decision_explanations.csv`
 - `latest_rebalance_explanations.json`
+- `orders_preview.csv`
+- `paper_order_explanations.csv`
 - `performance_summary.csv`
 - `sector_exposure.csv`
 - `equity_curve.png`

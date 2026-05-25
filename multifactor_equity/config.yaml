@@ -3,7 +3,10 @@ end_date: "2021-12-31"
 initial_capital: 1000000
 
 data:
-  price_source: "mock"  # mock or yfinance
+  price_provider: "mock"  # mock or yfinance
+  fundamental_provider: "csv"
+  metadata_provider: "local"
+  cache_enabled: true
   fundamentals_path: "data/fundamentals_sample.csv"
   tickers:
     - AAPL
@@ -53,3 +56,9 @@ portfolio:
 costs:
   commission_rate: 0.001
   slippage_rate: 0.001
+
+paper_trading:
+  dry_run: true
+  execute: false
+  cash_buffer: 0.02
+  min_notional: 1.0

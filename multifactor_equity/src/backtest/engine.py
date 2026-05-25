@@ -3,17 +3,26 @@ from __future__ import annotations
 import pandas as pd
 
 from src.backtest.costs import calculate_turnover, trading_cost
-from src.data.universe import build_eligible_universe
+from src.data.providers.base import FundamentalDataProvider, MetadataProvider, PriceData
+from src.data.universe import build_eligible_universe_from_providers
 from src.factors.composite import compute_factor_scores
 from src.portfolio.rebalance import build_target_weights
 from src.utils.calendar import month_end_signal_dates, next_trading_day
 
 
 class BacktestEngine:
-    def __init__(self, close: pd.DataFrame, volume: pd.DataFrame, fundamentals: pd.DataFrame, config: dict):
-        self.close = close
-        self.volume = volume
-        self.fundamentals = fundamentals
+    def __init__(
+        self,
+        price_data: PriceData,
+        fundamental_provider: FundamentalDataProvider,
+        metadata_provider: MetadataProvider,
+        config: dict,
+    ):
+        self.close = price_data.close
+        self.volume = price_data.volume
+        self.fundamental_provider = fundamental_provider
+        self.metadata_provider = metadata_provider
+        self.fundamentals = fundamental_provider.load_fundamentals()
         self.config = config
 
     def run(self) -> dict[str, pd.DataFrame]:
@@ -28,7 +37,14 @@ class BacktestEngine:
         trades = []
         old_weights = pd.Series(dtype=float)
         for signal_date, exec_date in exec_by_signal.items():
-            universe = build_eligible_universe(signal_date, self.close, self.volume, self.fundamentals, self.config["universe"])
+            universe = build_eligible_universe_from_providers(
+                signal_date,
+                self.close,
+                self.volume,
+                self.fundamental_provider,
+                self.metadata_provider,
+                self.config["universe"],
+            )
             if universe.empty:
                 target = pd.Series(dtype=float)
                 scores = pd.DataFrame()

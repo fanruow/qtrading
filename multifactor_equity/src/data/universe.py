@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import pandas as pd
 
-from src.data.fundamental_loader import fundamentals_asof
+from src.data.providers.base import FundamentalDataProvider, MetadataProvider
+
+
+def fundamentals_asof(fundamentals: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFrame:
+    eligible = fundamentals[fundamentals["available_date"] <= pd.Timestamp(as_of)].copy()
+    eligible = eligible.sort_values(["ticker", "available_date", "report_date"])
+    return eligible.groupby("ticker", as_index=False).tail(1).set_index("ticker", drop=False)
 
 
 def build_eligible_universe(
@@ -48,3 +54,20 @@ def build_eligible_universe(
     if not rows:
         return pd.DataFrame()
     return pd.DataFrame(rows).set_index("ticker", drop=False)
+
+
+def build_eligible_universe_from_providers(
+    as_of: pd.Timestamp,
+    close: pd.DataFrame,
+    volume: pd.DataFrame,
+    fundamental_provider: FundamentalDataProvider,
+    metadata_provider: MetadataProvider,
+    config: dict,
+) -> pd.DataFrame:
+    fundamentals = fundamental_provider.fundamentals_asof(as_of)
+    metadata = metadata_provider.metadata_asof(as_of)
+    if fundamentals.empty or metadata.empty:
+        return pd.DataFrame()
+    merged = fundamentals.drop(columns=[c for c in ["sector", "security_type", "is_adr", "is_etf", "is_otc", "is_preferred", "market_cap"] if c in fundamentals.columns])
+    merged = metadata.join(merged, how="inner", rsuffix="_fundamental").reset_index(drop=True)
+    return build_eligible_universe(as_of, close, volume, merged, config)

@@ -8,8 +8,7 @@ import pandas as pd
 from src.backtest.benchmarks import buy_and_hold_returns, equal_weight_returns, sector_neutral_equal_weight_returns
 from src.backtest.engine import BacktestEngine
 from src.backtest.metrics import performance_metrics
-from src.data.fundamental_loader import FundamentalLoader
-from src.data.price_loader import make_price_loader
+from src.data.providers.factory import make_fundamental_provider, make_metadata_provider, make_price_provider
 from src.factors.diagnostics import compute_factor_diagnostics
 from src.reporting.explainability import build_decision_explanations, write_latest_rebalance_json
 from src.reporting.plots import save_drawdown, save_equity_curve, save_factor_ic
@@ -25,10 +24,12 @@ def main() -> None:
     output_dir = project_path("outputs")
     output_dir.mkdir(exist_ok=True)
 
-    fundamentals = FundamentalLoader(project_path(config["data"]["fundamentals_path"])).load()
+    fundamental_provider = make_fundamental_provider(config)
+    metadata_provider = make_metadata_provider(config, fundamental_provider)
+    fundamentals = fundamental_provider.load_fundamentals()
     tickers = list(dict.fromkeys(config["data"]["tickers"] + [config["data"].get("benchmark", "SPY"), "IWB"]))
-    prices = make_price_loader(config["data"]["price_source"]).load(tickers, config["start_date"], config["end_date"])
-    engine = BacktestEngine(prices.close, prices.volume, fundamentals, config)
+    prices = make_price_provider(config).load_prices(tickers, config["start_date"], config["end_date"])
+    engine = BacktestEngine(prices, fundamental_provider, metadata_provider, config)
     results = engine.run()
 
     spy_returns = buy_and_hold_returns(prices.close, "SPY")
