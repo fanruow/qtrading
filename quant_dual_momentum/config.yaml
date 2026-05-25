@@ -1,0 +1,26 @@
+symbols:
+  - SPY
+  - QQQ
+  - IWM
+  - EFA
+  - EEM
+  - TLT
+  - IEF
+  - GLD
+  - VNQ
+  - DBC
+target_vol: 0.10
+top_n: 3
+vol_window: 63
+max_position_weight: 0.35
+max_order_notional: 25000
+min_order_notional: 1
+max_total_gross_exposure: 1.0
+max_daily_turnover: 1.0
+max_daily_loss: 0.05
+dry_run: true
+paper: true
+rebalance_frequency: monthly
+start: "2007-01-01"
+outputs_dir: outputs
+logs_dir: logs

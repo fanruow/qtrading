@@ -63,6 +63,28 @@ def generate_raw_signal_weights(
     return weights
 
 
+def generate_latest_target_weights(
+    prices: pd.DataFrame,
+    top_n: int = 3,
+    short_lag: int = 21,
+    long_lag: int = 252,
+    ma_window: int = 200,
+) -> pd.Series:
+    """Generate the latest available target weights from existing signal logic."""
+    weights = generate_raw_signal_weights(
+        prices=prices,
+        top_n=top_n,
+        short_lag=short_lag,
+        long_lag=long_lag,
+        ma_window=ma_window,
+    )
+    if weights.empty:
+        return pd.Series(0.0, index=prices.columns, name=prices.index[-1])
+    latest = weights.iloc[-1].reindex(prices.columns).fillna(0.0)
+    latest.name = weights.index[-1]
+    return latest
+
+
 def map_signal_dates_to_execution_dates(
     signal_dates: pd.DatetimeIndex,
     trading_index: pd.DatetimeIndex,

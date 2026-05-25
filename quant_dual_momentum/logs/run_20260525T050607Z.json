@@ -1,0 +1,42 @@
+{
+  "account_equity": 100289.95,
+  "current_positions": {},
+  "errors": [],
+  "generated_orders": [
+    {
+      "estimated_notional": 21408.540641784668,
+      "estimated_price": 30.540000915527344,
+      "qty": 701,
+      "side": "buy",
+      "symbol": "DBC"
+    },
+    {
+      "estimated_notional": 21410.99910736084,
+      "estimated_price": 65.87999725341797,
+      "qty": 325,
+      "side": "buy",
+      "symbol": "EEM"
+    },
+    {
+      "estimated_notional": 21104.820373535156,
+      "estimated_price": 413.82000732421875,
+      "qty": 51,
+      "side": "buy",
+      "symbol": "GLD"
+    }
+  ],
+  "submitted_orders": [],
+  "target_weights": {
+    "DBC": 0.21376707758439228,
+    "EEM": 0.21376707758439228,
+    "EFA": 0.0,
+    "GLD": 0.21376707758439228,
+    "IEF": 0.0,
+    "IWM": 0.0,
+    "QQQ": 0.0,
+    "SPY": 0.0,
+    "TLT": 0.0,
+    "VNQ": 0.0
+  },
+  "timestamp": "20260525T050607Z"
+}
