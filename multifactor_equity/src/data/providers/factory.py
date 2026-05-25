@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.data.providers.base import FundamentalDataProvider, MetadataProvider, PriceDataProvider
+from src.data.providers.alpaca_price import AlpacaPriceProvider
 from src.data.providers.csv_fundamental import CSVFundamentalProvider
 from src.data.providers.local_metadata import LocalMetadataProvider
 from src.data.providers.yfinance_price import MockPriceProvider, YFinancePriceProvider
@@ -11,6 +12,8 @@ def make_price_provider(config: dict) -> PriceDataProvider:
     data_cfg = config["data"]
     provider = data_cfg.get("price_provider", "mock")
     cache_enabled = bool(data_cfg.get("cache_enabled", True))
+    if provider == "alpaca":
+        return AlpacaPriceProvider(cache_enabled=cache_enabled)
     if provider == "yfinance":
         return YFinancePriceProvider(cache_enabled=cache_enabled)
     if provider == "mock":

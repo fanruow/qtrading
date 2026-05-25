@@ -52,10 +52,25 @@ portfolio:
   top_n: 50
   max_stock_weight: 0.025
   max_sector_weight: 0.25
+  current_positions_source: "csv"
+  current_positions_path: "data/current_positions.csv"
+  portfolio_value: 100000
 
 costs:
   commission_rate: 0.001
   slippage_rate: 0.001
+
+decision_output:
+  enabled: true
+  as_of_date: "latest"
+  include_explanations: true
+  include_order_preview: true
+
+orders:
+  generate_preview: true
+  allow_fractional_shares: false
+  min_weight_change: 0.0025
+  min_trade_notional: 100
 
 paper_trading:
   dry_run: true

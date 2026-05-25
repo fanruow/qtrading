@@ -12,7 +12,7 @@ python main.py --config config.yaml
 pytest
 ```
 
-Default config uses deterministic mock prices so the example runs without network access. Set `data.price_provider: yfinance` in `config.yaml` to prototype price downloads through `yfinance`; keep `data.fundamental_provider: csv` for local CSV/parquet fundamentals.
+Default config uses deterministic mock prices so the example runs without network access. Set `data.price_provider: yfinance` or `data.price_provider: alpaca` in `config.yaml` to prototype external daily price data; keep `data.fundamental_provider: csv` for local CSV/parquet fundamentals.
 
 ## Paper Trading
 
@@ -39,6 +39,16 @@ python paper_trading.py --config config.yaml --execute --no-dry-run
 ```
 
 `.env` is ignored by git. Keys are loaded into environment variables at runtime and are never hardcoded. The Alpaca broker implementation rejects non-paper endpoints. Risk checks enforce long-only targets, no leverage after the configured cash buffer, max single-name weight, max sector weight, and unknown-symbol rejection.
+
+## Decision Output
+
+When `decision_output.enabled: true`, `main.py` also compares the latest target portfolio against `data/current_positions.csv` and writes the latest trading decision package. Current positions use:
+
+```text
+ticker,current_weight,current_shares
+```
+
+The decision layer classifies each ticker as `BUY`, `SELL`, `ADD`, `TRIM`, `HOLD`, or `SKIP`, attaches explanations derived only from existing `factor_scores` columns, and optionally writes an order preview. It never submits orders.
 
 ## Data Model
 
@@ -102,6 +112,9 @@ All outputs are written to `outputs/`:
 - `latest_rebalance_explanations.json`
 - `orders_preview.csv`
 - `paper_order_explanations.csv`
+- `latest_decisions.csv`
+- `latest_decisions.json`
+- `current_vs_target.csv`
 - `performance_summary.csv`
 - `sector_exposure.csv`
 - `equity_curve.png`

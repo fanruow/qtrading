@@ -5,6 +5,7 @@ import pytest
 
 from src.data.fundamental_loader import FundamentalLoader
 from src.data.providers.base import FundamentalDataProvider, MetadataProvider, PriceDataProvider
+from src.data.providers.alpaca_price import AlpacaPriceProvider
 from src.data.providers.csv_fundamental import CSVFundamentalProvider, REQUIRED_FUNDAMENTAL_COLUMNS
 from src.data.providers.factory import make_fundamental_provider, make_metadata_provider, make_price_provider
 from src.data.providers.local_metadata import LocalMetadataProvider
@@ -118,3 +119,58 @@ def test_yfinance_price_provider_mock_download_returns_ohlcv_schema():
     assert list(prices.low.columns) == tickers
     assert list(prices.close.columns) == tickers
     assert list(prices.volume.columns) == tickers
+
+
+def test_alpaca_price_provider_requires_env_keys(monkeypatch):
+    monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+    monkeypatch.delenv("ALPACA_SECRET_KEY", raising=False)
+    monkeypatch.setenv("ALPACA_DATA_FEED", "iex")
+
+    with pytest.raises(ValueError, match="ALPACA_API_KEY and ALPACA_SECRET_KEY"):
+        AlpacaPriceProvider()
+
+
+def test_factory_creates_alpaca_price_provider(monkeypatch):
+    monkeypatch.setenv("ALPACA_API_KEY", "key")
+    monkeypatch.setenv("ALPACA_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_DATA_FEED", "iex")
+    config = {
+        "data": {
+            "price_provider": "alpaca",
+            "cache_enabled": True,
+        }
+    }
+
+    provider = make_price_provider(config)
+
+    assert isinstance(provider, AlpacaPriceProvider)
+    assert provider.data_feed == "iex"
+
+
+def test_alpaca_price_provider_mock_daily_bars_returns_ohlcv_schema(monkeypatch):
+    monkeypatch.setenv("ALPACA_API_KEY", "key")
+    monkeypatch.setenv("ALPACA_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_DATA_FEED", "iex")
+    payload = {
+        "bars": {
+            "AAA": [
+                {"t": "2021-01-04T05:00:00Z", "o": 10, "h": 11, "l": 9, "c": 10.5, "v": 1000},
+                {"t": "2021-01-05T05:00:00Z", "o": 10.5, "h": 12, "l": 10, "c": 11.5, "v": 1200},
+            ],
+            "BBB": [
+                {"t": "2021-01-04T05:00:00Z", "o": 20, "h": 21, "l": 19, "c": 20.5, "v": 2000},
+                {"t": "2021-01-05T05:00:00Z", "o": 20.5, "h": 22, "l": 20, "c": 21.5, "v": 2200},
+            ],
+        }
+    }
+
+    class StubAlpacaPriceProvider(AlpacaPriceProvider):
+        def _download_bars(self, tickers, start, end):
+            return payload
+
+    prices = StubAlpacaPriceProvider().load_prices(["AAA", "BBB"], "2021-01-01", "2021-01-10")
+
+    prices.validate()
+    assert list(prices.open.columns) == ["AAA", "BBB"]
+    assert prices.close.loc[pd.Timestamp("2021-01-04"), "AAA"] == 10.5
+    assert prices.volume.loc[pd.Timestamp("2021-01-05"), "BBB"] == 2200

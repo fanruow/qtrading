@@ -9,6 +9,7 @@ from src.backtest.benchmarks import buy_and_hold_returns, equal_weight_returns, 
 from src.backtest.engine import BacktestEngine
 from src.backtest.metrics import performance_metrics
 from src.data.providers.factory import make_fundamental_provider, make_metadata_provider, make_price_provider
+from src.decisions.decision_engine import run_decision_output
 from src.factors.diagnostics import compute_factor_diagnostics
 from src.reporting.explainability import build_decision_explanations, write_latest_rebalance_json
 from src.reporting.plots import save_drawdown, save_equity_curve, save_factor_ic
@@ -75,6 +76,25 @@ def main() -> None:
     save_equity_curve(results["equity_curves"], output_dir / "equity_curve.png")
     save_drawdown(results["equity_curves"]["strategy"], output_dir / "drawdown.png")
     save_factor_ic(factor_ic, output_dir / "factor_ic.png")
+    if config.get("decision_output", {}).get("enabled", False):
+        decision_result = run_decision_output(results, prices.close, config, output_dir)
+        counts = decision_result["counts"]
+        print(
+            "Decision summary: "
+            f"BUY={counts.get('BUY', 0)}, "
+            f"SELL={counts.get('SELL', 0)}, "
+            f"ADD={counts.get('ADD', 0)}, "
+            f"TRIM={counts.get('TRIM', 0)}, "
+            f"HOLD={counts.get('HOLD', 0)}"
+        )
+        print(
+            "Decision outputs: "
+            f"{output_dir / 'latest_decisions.csv'}, "
+            f"{output_dir / 'latest_decisions.json'}, "
+            f"{output_dir / 'decision_explanations.csv'}, "
+            f"{output_dir / 'current_vs_target.csv'}, "
+            f"{output_dir / 'orders_preview.csv'}"
+        )
     print(f"Wrote outputs to {output_dir}")
 
 
