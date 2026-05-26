@@ -1,0 +1,27 @@
+provider: yfinance
+lookback_days: 252
+initial_capital: 100000
+risk:
+  max_position_risk_pct: 0.01
+  max_symbol_exposure_pct: 0.10
+  max_portfolio_drawdown_pct: 0.20
+  min_option_volume: 100
+  min_option_open_interest: 500
+  max_bid_ask_spread_pct: 0.12
+strategy:
+  dte_min: 21
+  dte_max: 60
+  target_delta_long: 0.35
+  target_delta_short: 0.20
+email:
+  enabled: false
+  smtp_host: smtp.example.com
+  smtp_port: 587
+  username_env: QOM_EMAIL_USERNAME
+  password_env: QOM_EMAIL_PASSWORD
+  from_address: alerts@example.com
+  to_addresses: []
+telegram:
+  enabled: false
+  bot_token_env: QOM_TELEGRAM_BOT_TOKEN
+  chat_id_env: QOM_TELEGRAM_CHAT_ID
