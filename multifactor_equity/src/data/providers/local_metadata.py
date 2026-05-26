@@ -24,6 +24,7 @@ class LocalMetadataProvider(MetadataProvider):
             "is_preferred",
             "available_date",
             "market_cap",
+            "shares_outstanding",
         ]
         fundamentals = self.fundamentals_provider.load_fundamentals()
         metadata = fundamentals[[c for c in cols if c in fundamentals.columns]].copy()

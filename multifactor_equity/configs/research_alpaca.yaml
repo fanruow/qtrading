@@ -1,9 +1,9 @@
-start_date: "2023-01-01"
-end_date: "2026-05-25"
+start_date: "2020-01-01"
+end_date: "2021-12-31"
 initial_capital: 1000000
 
 data:
-  price_provider: "alpaca"  # mock, yfinance, or alpaca
+  price_provider: "alpaca"
   fundamental_provider: "sec_edgar"
   metadata_provider: "local"
   cache_enabled: true
@@ -72,32 +72,3 @@ orders:
   allow_fractional_shares: false
   min_weight_change: 0.0025
   min_trade_notional: 100
-
-paper_trading:
-  enabled: true
-  broker: "alpaca"
-  paper: true
-  signal_source:
-    target_portfolio_path: "outputs/latest_target_portfolio.csv"
-    decisions_path: "outputs/latest_decisions.csv"
-    explanations_path: "outputs/decision_explanations.csv"
-  execution:
-    dry_run_default: true
-    order_type: "market"
-    time_in_force: "day"
-    allow_fractional_shares: false
-    min_trade_notional: 100
-    min_weight_change: 0.0025
-    sell_before_buy: true
-  risk:
-    long_only: true
-    max_single_name_weight: 0.025
-    max_sector_weight: 0.25
-    max_gross_exposure: 1.0
-    cash_buffer_pct: 0.02
-    max_orders_per_run: 100
-    max_turnover_per_run: 0.50
-    block_short_sales: true
-    reject_if_market_closed: true
-    reject_if_stale_signal: true
-    max_signal_age_days: 3

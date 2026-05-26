@@ -71,7 +71,7 @@ class BacktestEngine:
                 if abs(delta) > 1e-12:
                     trades.append({"date": exec_date, "ticker": ticker, "weight_change": delta})
             old_weights = target
-        returns = self.close.pct_change().fillna(0.0)
+        returns = self.close.pct_change(fill_method=None).fillna(0.0)
         weights = pd.DataFrame(0.0, index=dates, columns=self.close.columns)
         daily = pd.Series(0.0, index=dates)
         costs_by_date = {r["execution_date"]: r["total_cost"] for r in rebalance_rows}

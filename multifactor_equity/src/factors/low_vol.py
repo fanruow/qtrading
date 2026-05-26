@@ -18,7 +18,7 @@ def _beta(asset: pd.Series, market: pd.Series) -> float:
 
 def low_vol_raw(as_of: pd.Timestamp, close: pd.DataFrame, tickers: list[str], benchmark: str = "SPY") -> pd.DataFrame:
     loc = close.index.get_loc(pd.Timestamp(as_of))
-    ret = close.pct_change()
+    ret = close.pct_change(fill_method=None)
     out = pd.DataFrame(index=tickers)
     market = ret[benchmark].iloc[max(0, loc - 251) : loc + 1] if benchmark in ret else pd.Series(dtype=float)
     for ticker in tickers:

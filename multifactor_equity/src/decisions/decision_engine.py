@@ -107,6 +107,10 @@ def run_decision_output(
     positions = results["positions"].copy()
     positions["date"] = pd.to_datetime(positions["date"])
     latest_target = positions[positions["date"] == latest_exec_date].set_index("ticker")["weight"]
+    latest_target_portfolio = latest_target.rename("target_weight").reset_index()
+    latest_target_portfolio = latest_target_portfolio.merge(latest_scores[["ticker", "sector"]], on="ticker", how="left")
+    latest_target_portfolio["signal_date"] = signal_date
+    latest_target_portfolio["execution_date"] = latest_exec_date
 
     current_path = project_path(config["portfolio"]["current_positions_path"])
     current_positions = load_current_positions(current_path)
@@ -130,6 +134,7 @@ def run_decision_output(
         decisions = attach_explanations(decisions, latest_scores, config["factors"]["weights"])
 
     output_dir.mkdir(exist_ok=True)
+    latest_target_portfolio.to_csv(output_dir / "latest_target_portfolio.csv", index=False)
     current_vs_target.to_csv(output_dir / "current_vs_target.csv", index=False)
     decisions.to_csv(output_dir / "latest_decisions.csv", index=False)
     explanations = decisions[decisions.columns].copy()
@@ -152,6 +157,7 @@ def run_decision_output(
     return {
         "decisions": decisions,
         "current_vs_target": current_vs_target,
+        "latest_target_portfolio": latest_target_portfolio,
         "orders_preview": orders_preview,
         "counts": counts,
     }

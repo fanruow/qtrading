@@ -40,6 +40,15 @@ python paper_trading.py --config config.yaml --execute --no-dry-run
 
 `.env` is ignored by git. Keys are loaded into environment variables at runtime and are never hardcoded. The Alpaca broker implementation rejects non-paper endpoints. Risk checks enforce long-only targets, no leverage after the configured cash buffer, max single-name weight, max sector weight, and unknown-symbol rejection.
 
+`live_paper.py` is the automated Alpaca paper execution entrypoint. `main.py` never submits orders. The live paper runner reads `outputs/latest_target_portfolio.csv`, `outputs/latest_decisions.csv`, and `outputs/decision_explanations.csv`, syncs the Alpaca paper account, writes order/rejection/execution logs, and submits only when `--execute` is explicitly passed:
+
+```bash
+python live_paper.py --config configs/paper.yaml --dry-run
+python live_paper.py --config configs/paper.yaml --execute
+```
+
+Stale signals are rejected when `paper_trading.risk.reject_if_stale_signal: true`.
+
 ## Decision Output
 
 When `decision_output.enabled: true`, `main.py` also compares the latest target portfolio against `data/current_positions.csv` and writes the latest trading decision package. Current positions use:
@@ -68,6 +77,8 @@ The backtest uses provider interfaces only for data access:
 - `MetadataProvider`
 
 The sample providers use only rows with `available_date <= signal_date`; `report_date` is metadata and should be retained for auditability. Real data should replace the sample providers with point-in-time, survivorship-bias-free fundamentals and security master data from sources such as Compustat, FactSet, Polygon, QuantConnect, OpenBB, or SEC EDGAR-derived pipelines. For production-grade research, include delisted names, historical sector/security classifications, split-adjusted prices, and actual historical tradability.
+
+`SECEdgarFundamentalProvider` can be selected with `data.fundamental_provider: sec_edgar`. It calls SEC companyfacts by ticker/date range, maps differing XBRL concept names into the project schema, and caches raw and standardized data under `data/cache/fundamentals/`. SEC companyfacts does not provide sector, market cap, or enterprise value directly, so those fields are left missing unless another metadata/enrichment provider supplies them. If SEC `available_date` cannot be obtained from a richer filing feed, this provider uses companyfacts `filed` dates as `available_date`; this is conservative for look-ahead prevention but less precise than accepted datetime. The backtest still filters strictly on `available_date <= signal_date`.
 
 ## Strategy
 
@@ -114,7 +125,11 @@ All outputs are written to `outputs/`:
 - `paper_order_explanations.csv`
 - `latest_decisions.csv`
 - `latest_decisions.json`
+- `latest_target_portfolio.csv`
 - `current_vs_target.csv`
+- `submitted_orders.csv`
+- `rejected_orders.csv`
+- `paper_execution_log.json`
 - `performance_summary.csv`
 - `sector_exposure.csv`
 - `equity_curve.png`

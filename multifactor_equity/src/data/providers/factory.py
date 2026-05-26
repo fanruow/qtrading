@@ -4,6 +4,7 @@ from src.data.providers.base import FundamentalDataProvider, MetadataProvider, P
 from src.data.providers.alpaca_price import AlpacaPriceProvider
 from src.data.providers.csv_fundamental import CSVFundamentalProvider
 from src.data.providers.local_metadata import LocalMetadataProvider
+from src.data.providers.sec_edgar_fundamental import SECEdgarFundamentalProvider
 from src.data.providers.yfinance_price import MockPriceProvider, YFinancePriceProvider
 from src.utils.config import project_path
 
@@ -27,6 +28,14 @@ def make_fundamental_provider(config: dict) -> FundamentalDataProvider:
     cache_enabled = bool(data_cfg.get("cache_enabled", True))
     if provider == "csv":
         return CSVFundamentalProvider(project_path(data_cfg["fundamentals_path"]), cache_enabled=cache_enabled)
+    if provider in {"sec_edgar", "sec", "edgar"}:
+        return SECEdgarFundamentalProvider(
+            tickers=data_cfg.get("tickers", []),
+            start=config.get("start_date"),
+            end=config.get("end_date"),
+            cache_dir=project_path(data_cfg.get("fundamental_cache_dir", "data/cache/fundamentals")),
+            cache_enabled=cache_enabled,
+        )
     raise ValueError(f"unknown fundamental provider: {provider}")
 
 

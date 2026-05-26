@@ -4,11 +4,11 @@ import pandas as pd
 
 
 def buy_and_hold_returns(close: pd.DataFrame, ticker: str) -> pd.Series:
-    return close[ticker].pct_change().fillna(0.0)
+    return close[ticker].pct_change(fill_method=None).fillna(0.0)
 
 
 def equal_weight_returns(close: pd.DataFrame, members_by_date: dict[pd.Timestamp, list[str]]) -> pd.Series:
-    ret = close.pct_change().fillna(0.0)
+    ret = close.pct_change(fill_method=None).fillna(0.0)
     out = pd.Series(0.0, index=close.index)
     current = []
     for date in close.index:
@@ -20,7 +20,7 @@ def equal_weight_returns(close: pd.DataFrame, members_by_date: dict[pd.Timestamp
 
 
 def sector_neutral_equal_weight_returns(close: pd.DataFrame, sectors_by_ticker: dict[str, str], members_by_date: dict[pd.Timestamp, list[str]]) -> pd.Series:
-    ret = close.pct_change().fillna(0.0)
+    ret = close.pct_change(fill_method=None).fillna(0.0)
     out = pd.Series(0.0, index=close.index)
     current = []
     for date in close.index:

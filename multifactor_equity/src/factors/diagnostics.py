@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 
 FACTOR_COLUMNS = ["momentum_score", "quality_score", "value_score", "low_vol_score", "composite_score"]
+IC_COLUMNS = ["signal_date", "factor", "ic", "ic_mean", "ic_std", "icir"]
 
 
 def spearman_rank_corr(x: pd.Series, y: pd.Series) -> float:
@@ -31,6 +33,7 @@ def compute_factor_diagnostics(factor_scores: pd.DataFrame, close: pd.DataFrame,
             aligned = pd.concat([cross.loc[tickers, factor], fwd.rename("forward_return")], axis=1).dropna()
             if len(aligned) >= 3:
                 ic = spearman_rank_corr(aligned[factor], aligned["forward_return"])
+                ic = float(ic) if pd.notna(ic) else np.nan
                 try:
                     buckets = pd.qcut(aligned[factor].rank(method="first"), quantiles, labels=False) + 1
                     grouped = aligned.groupby(buckets)["forward_return"].mean()
@@ -41,11 +44,14 @@ def compute_factor_diagnostics(factor_scores: pd.DataFrame, close: pd.DataFrame,
                 except ValueError:
                     pass
             else:
-                ic = pd.NA
+                ic = np.nan
             ic_rows.append({"signal_date": signal_date, "factor": factor, "ic": ic})
-    ic_df = pd.DataFrame(ic_rows)
+    ic_df = pd.DataFrame(ic_rows, columns=["signal_date", "factor", "ic"])
     if not ic_df.empty:
+        ic_df["ic"] = pd.to_numeric(ic_df["ic"], errors="coerce")
         stats = ic_df.groupby("factor")["ic"].agg(["mean", "std"]).rename(columns={"mean": "ic_mean", "std": "ic_std"})
         stats["icir"] = stats["ic_mean"] / stats["ic_std"]
         ic_df = ic_df.merge(stats, on="factor", how="left")
+    else:
+        ic_df = pd.DataFrame(columns=IC_COLUMNS)
     return ic_df, pd.DataFrame(q_rows)

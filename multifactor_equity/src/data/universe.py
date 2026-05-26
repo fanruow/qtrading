@@ -5,6 +5,18 @@ import pandas as pd
 from src.data.providers.base import FundamentalDataProvider, MetadataProvider
 
 
+def _gt(value, threshold: float) -> bool:
+    return bool(pd.notna(value) and float(value) > threshold)
+
+
+def _lte_date(value, threshold: pd.Timestamp) -> bool:
+    return bool(pd.notna(value) and pd.Timestamp(value) <= threshold)
+
+
+def _is_false(value) -> bool:
+    return bool(pd.notna(value) and not bool(value))
+
+
 def fundamentals_asof(fundamentals: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFrame:
     eligible = fundamentals[fundamentals["available_date"] <= pd.Timestamp(as_of)].copy()
     eligible = eligible.sort_values(["ticker", "available_date", "report_date"])
@@ -35,16 +47,26 @@ def build_eligible_universe(
         price = s.loc[as_of]
         adv20 = (prices[ticker] * vols[ticker]).loc[:as_of].dropna().tail(20).mean()
         meta = f.loc[ticker]
+        if pd.isna(meta.get("market_cap", pd.NA)) and pd.notna(meta.get("shares_outstanding", pd.NA)):
+            meta = meta.copy()
+            meta["market_cap"] = float(price) * float(meta["shares_outstanding"])
+        if pd.isna(meta.get("enterprise_value", pd.NA)) and pd.notna(meta.get("market_cap", pd.NA)):
+            meta = meta.copy()
+            debt = 0.0 if pd.isna(meta.get("total_debt", pd.NA)) else float(meta["total_debt"])
+            meta["enterprise_value"] = float(meta["market_cap"]) + debt
+        if pd.isna(meta.get("sector", pd.NA)):
+            meta = meta.copy()
+            meta["sector"] = "Unknown"
         checks = [
-            meta["security_type"] == config["allowed_security_type"],
-            not bool(meta["is_adr"]),
-            not bool(meta["is_etf"]),
-            not bool(meta["is_otc"]),
-            not bool(meta["is_preferred"]),
-            price > config["min_price"],
-            adv20 > config["min_avg_dollar_volume_20d"],
-            meta["market_cap"] > config["min_market_cap"],
-            meta["available_date"] <= as_of,
+            bool(meta.get("security_type") == config["allowed_security_type"]),
+            _is_false(meta.get("is_adr", False)),
+            _is_false(meta.get("is_etf", False)),
+            _is_false(meta.get("is_otc", False)),
+            _is_false(meta.get("is_preferred", False)),
+            _gt(price, config["min_price"]),
+            _gt(adv20, config["min_avg_dollar_volume_20d"]),
+            _gt(meta.get("market_cap", pd.NA), config["min_market_cap"]),
+            _lte_date(meta.get("available_date", pd.NA), as_of),
         ]
         if all(checks):
             row = meta.to_dict()

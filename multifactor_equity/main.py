@@ -14,12 +14,15 @@ from src.factors.diagnostics import compute_factor_diagnostics
 from src.reporting.explainability import build_decision_explanations, write_latest_rebalance_json
 from src.reporting.plots import save_drawdown, save_equity_curve, save_factor_ic
 from src.utils.config import load_config, project_path
+from src.utils.env import load_dotenv
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="config.yaml")
+    parser.add_argument("--env-file", default=".env")
     args = parser.parse_args()
+    load_dotenv(project_path(args.env_file))
     config_path = project_path(args.config)
     config = load_config(config_path)
     output_dir = project_path("outputs")
