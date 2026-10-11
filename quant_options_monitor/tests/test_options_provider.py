@@ -49,7 +49,11 @@ def test_mock_chain_has_strategy_selector_ready_contract_data() -> None:
     )
 
     chain = provider.get_chain("SPY")
-    contracts_30_dte = [contract for contract in chain.contracts if contract.dte == 30]
+    contracts_30_dte = [
+        contract
+        for contract in chain.contracts
+        if (contract.expiration - chain.as_of.date()).days == 30
+    ]
     near_money = [contract for contract in contracts_30_dte if abs(contract.strike - 500.0) <= 10]
 
     assert near_money
